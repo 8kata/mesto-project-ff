@@ -49,16 +49,16 @@ popups.forEach((popup) => {
   });
 });
 
-function handleFormSubmit(evt) {
+function handleProfileEditForm(evt) {
     evt.preventDefault();
     profileTitle.textContent = nameInput.value;
     profileDescription.textContent = jobInput.value;
     closeModal(popupTypeEdit);
 }
 
-profileFormElement.addEventListener('submit', handleFormSubmit);
+profileFormElement.addEventListener('submit', handleProfileEditForm);
 
-function handleProfileFormSubmit(evt) {
+function handleCardFormSubmit(evt) {
     evt.preventDefault();
     const cardData = {
       name: popupInputTypeCardName.value,
@@ -70,7 +70,7 @@ function handleProfileFormSubmit(evt) {
       cardFormElement.reset();
 }
 
-cardFormElement.addEventListener('submit', handleProfileFormSubmit);
+cardFormElement.addEventListener('submit', handleCardFormSubmit);
 
 initialCards.forEach((cardData) => {
   const card = createCard(cardData, removeCard, openImg, toggleLike);
