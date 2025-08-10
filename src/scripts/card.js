@@ -10,9 +10,6 @@ export function createCard(card, deleteCard, openImage, likeCard, ownerId) {
   cardImage.src = card.link;
   cardImage.alt = card.name;
   likeCounter.textContent = card.likes.length || 0;
-  cardDeleteButton.addEventListener('click', (evt) => {
-    deleteCard(evt, card._id);
-  });
   cardImage.addEventListener('click', openImage);
   cardLikeButton.addEventListener('click', (evt) => {
     likeCard(evt, card._id);
@@ -20,6 +17,10 @@ export function createCard(card, deleteCard, openImage, likeCard, ownerId) {
   
   if(card.owner._id !== ownerId){
     cardDeleteButton.remove();
+  } else {
+    cardDeleteButton.addEventListener('click', (evt) => {
+    deleteCard(evt, card._id);
+    });
   }
 
   if(card.likes.some((owner)=>{

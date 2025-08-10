@@ -32,12 +32,7 @@ enableValidation(config);
 
 function toggleCardLike(evt, cardId) {
   const liked = evt.target.classList.contains('card__like-button_is-active');
-  let likeRequest = null;
-  if (liked) {
-    likeRequest = unlikeCard;
-  } else {
-    likeRequest = likeCard;
-  };
+  let likeRequest = liked ? unlikeCard : likeCard;
 
   likeRequest(cardId)
     .then((currentCard) => {
