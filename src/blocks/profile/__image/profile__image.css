@@ -7,6 +7,30 @@
   background-size: cover;
   background-position: center;
   margin: 0 29px 0 0;
+  position: relative;
+}
+
+.profile__image:hover {
+  cursor: pointer;
+}
+
+.profile__image:hover::before {
+  content: '';
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.profile__image:hover::after {
+  content: '';
+  top: 47px;
+  left: 47px;
+  width: 26px;
+  height: 26px;
+  position: absolute;
+  background-image: url('../../../images/Vector.svg');
 }
 
 @media screen and (max-width: 740px) {

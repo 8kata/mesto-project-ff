@@ -1,27 +1,63 @@
 import '../pages/index.css';
-import {initialCards} from './cards';
 import {createCard, removeCard,toggleLike} from './card';
 import {openModal, closeModal} from './modal';
 import {closeBuyOverlay} from './modal';
+import {enableValidation, clearValidation} from  './validation';
+import {addCard, changeAvatar, changeProfileData, deleteCardApi, getCards, getProfileData, likeCard, unlikeCard } from './api';
+import {
+  placesList, profileTitle, profileDescription, avatar, profileEditButton, profileAddButton, popupTypeImage, popupImage, 
+  imageCaption, popupTypeEdit, profileFormElement, nameInput, jobInput, popupsCloseButtons, popups, popupTypeNewCard, cardFormElement, 
+  popupInputTypeCardName, popupInputTypeUrl, popupTypeAvatar, avatarFormElement, avatarInput, config
+} from './constants';
 
-const placesList = document.querySelector('.places__list');
-const profileTitle = document.querySelector('.profile__title');
-const profileDescription = document.querySelector('.profile__description');
-const profileEditButton = document.querySelector('.profile__edit-button');
-const profileAddButton = document.querySelector('.profile__add-button');
-const popupTypeImage = document.querySelector('.popup_type_image');
-const popupImage = popupTypeImage.querySelector('.popup__image');
-const imageCaption = popupTypeImage.querySelector('.popup__caption');
-const popupTypeEdit = document.querySelector('.popup_type_edit');
-const profileFormElement = document.forms["edit-profile"];
-const nameInput = profileFormElement.querySelector('.popup__input_type_name');
-const jobInput = profileFormElement.querySelector('.popup__input_type_description');
-const popupsCloseButtons = document.querySelectorAll('.popup__close');
-const popups = document.querySelectorAll('.popup');
-const popupTypeNewCard = document.querySelector('.popup_type_new-card');
-const cardFormElement = document.forms["new-place"];
-const popupInputTypeCardName = popupTypeNewCard.querySelector('.popup__input_type_card-name');
-const popupInputTypeUrl = popupTypeNewCard.querySelector('.popup__input_type_url');
+let myId = null;
+
+Promise.all([getCards(), getProfileData()])
+  .then(([cards, profile]) => {
+    myId = profile._id;
+    profileTitle.textContent = profile.name;
+    profileDescription.textContent = profile.about;
+    avatar.style.backgroundImage = `url('${profile.avatar}')`;
+    
+    cards.forEach((card) => {
+    const currentCard = createCard(card, cardDelete, openImg, toggleCardLike, myId);
+    placesList.append(currentCard);
+    })
+  })
+  .catch((error) => {
+    console.log(error);
+  })
+
+enableValidation(config);
+
+function toggleCardLike(evt, cardId) {
+  const liked = evt.target.classList.contains('card__like-button_is-active');
+  let likeRequest = null;
+  if (liked) {
+    likeRequest = unlikeCard;
+  } else {
+    likeRequest = likeCard;
+  };
+
+  likeRequest(cardId)
+    .then((currentCard) => {
+      evt.target.closest('.card').querySelector('.card__like-button-counter').textContent = currentCard.likes.length;
+      toggleLike(evt.target);
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+}
+
+function cardDelete(evt, cardId) {
+  deleteCardApi(cardId) 
+    .then(() => {
+      removeCard(evt)
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+}
 
 function openImg (evt){
   popupImage.src = evt.target.src;
@@ -33,12 +69,21 @@ function openImg (evt){
 profileEditButton.addEventListener('click', () => {
   nameInput.value = profileTitle.textContent;
   jobInput.value = profileDescription.textContent;
+  clearValidation(profileFormElement, config);
   openModal(popupTypeEdit);
 });
 
 profileAddButton.addEventListener('click', () => {
-    openModal(popupTypeNewCard);
+  cardFormElement.reset();
+  clearValidation(cardFormElement, config);
+  openModal(popupTypeNewCard);
 });
+
+avatar.addEventListener('click', () => {
+  avatarFormElement.reset();
+  clearValidation(avatarFormElement, config);
+  openModal(popupTypeAvatar);
+})
 
 popups.forEach((popup) => {
   popup.addEventListener('click', closeBuyOverlay);
@@ -50,32 +95,69 @@ popups.forEach((popup) => {
 });
 
 function handleProfileEditForm(evt) {
-    evt.preventDefault();
-    profileTitle.textContent = nameInput.value;
-    profileDescription.textContent = jobInput.value;
-    closeModal(popupTypeEdit);
+  evt.preventDefault();
+  evt.submitter.textContent = 'Сохранение...';
+
+  changeProfileData(nameInput.value, jobInput.value)
+    .then((profileData) => {
+      profileTitle.textContent = profileData.name;
+      profileDescription.textContent = profileData.about;
+      closeModal(popupTypeEdit)
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+    .finally(() => {
+      evt.submitter.textContent = 'Сохранить';
+    })
 }
 
 profileFormElement.addEventListener('submit', handleProfileEditForm);
 
 function handleCardFormSubmit(evt) {
-    evt.preventDefault();
-    const cardData = {
-      name: popupInputTypeCardName.value,
-      link: popupInputTypeUrl.value
-    };
-    const newCard = createCard(cardData, removeCard, openImg, toggleLike);
-    placesList.prepend(newCard);
+  evt.preventDefault();
+  evt.submitter.textContent = 'Создание...';
+  const cardData = {
+    name: popupInputTypeCardName.value,
+    link: popupInputTypeUrl.value
+  }
+
+  addCard(cardData)
+    .then((card) => {
+      const newCard = createCard(card, cardDelete, openImg, toggleCardLike, myId);
+      placesList.prepend(newCard);
       closeModal(popupTypeNewCard);
       cardFormElement.reset();
+    })
+    .catch((error) => {
+    console.log(error);
+    })
+    .finally(() => {
+      evt.submitter.textContent = 'Создать';
+    })
 }
 
 cardFormElement.addEventListener('submit', handleCardFormSubmit);
 
-initialCards.forEach((cardData) => {
-  const card = createCard(cardData, removeCard, openImg, toggleLike);
-  placesList.append(card);
-});
+function handleAvatarEditForm(evt) {
+  evt.preventDefault();
+  evt.submitter.textContent = 'Сохранение...';
+
+  changeAvatar(avatarInput.value)
+    .then((profileData) => {
+      avatar.style.backgroundImage = `url('${profileData.avatar}')`;
+      closeModal(popupTypeAvatar);
+      avatarFormElement.reset();
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+    .finally(() => {
+      evt.submitter.textContent = 'Сохранить';
+    })
+}
+
+avatarFormElement.addEventListener('submit', handleAvatarEditForm)
 
 
 
